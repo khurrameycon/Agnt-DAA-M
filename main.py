@@ -15,6 +15,17 @@ from PyQt6.QtWidgets import QApplication, QMessageBox, QDialog
 import certifi
 import httpx 
 
+
+import ssl
+import certifi
+import os
+
+# macOS SSL fix
+os.environ['SSL_CERT_FILE'] = certifi.where()
+os.environ['REQUESTS_CA_BUNDLE'] = certifi.where()
+ssl._create_default_https_context = ssl._create_unverified_context
+
+
 # Fix for MultiplexedPath issue - MUST be before any imports that might use transformers
 if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
     # Create a temporary directory for transformers cache
@@ -144,16 +155,17 @@ def main():
         app.processEvents()
         
         # Check for valid license
-        if not check_license(logger):
-            logger.error("License check failed, exiting application")
-            QMessageBox.critical(
-                None,
-                "License Required",
-                "A valid license is required to use sagax1.\n"
-                "Please purchase a license from www.yourdomain.com and try again."
-            )
-            return 1
-        
+        # if not check_license(logger):
+        #     logger.error("License check failed, exiting application")
+        #     QMessageBox.critical(
+        #         None,
+        #         "License Required",
+        #         "A valid license is required to use sagax1.\n"
+        #         "Please purchase a license from www.yourdomain.com and try again."
+        #     )
+        #     return 1
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        os.chdir(script_dir)
         # Initialize configuration
         config_manager = ConfigManager()
         

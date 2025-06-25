@@ -25,7 +25,8 @@ class AgentPersistenceManager:
         
         # Set up config path
         if config_path is None:
-            self.config_path = os.path.join(os.path.expanduser("~"), ".sagax1")
+            # self.config_path = os.path.join(os.path.expanduser("~"), ".sagax1")
+            self.config_path = os.path.join(os.path.expanduser("~"), ".my1ai")
         else:
             self.config_path = os.path.expanduser(config_path)
             

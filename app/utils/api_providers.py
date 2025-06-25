@@ -38,7 +38,9 @@ class OpenAIProvider(BaseAPIProvider):
                 model=self.model,
                 messages=formatted_messages,
                 temperature=kwargs.get("temperature", 0.7),
-                max_tokens=kwargs.get("max_tokens", 2048)
+                max_tokens=kwargs.get("max_tokens", 2048),
+                timeout=30
+                # max_retries=3
             )
             return response.choices[0].message.content
         except Exception as e:
@@ -101,7 +103,9 @@ class GroqProvider(BaseAPIProvider):
                 model=self.model,
                 messages=formatted_messages,
                 temperature=kwargs.get("temperature", 0.7),
-                max_tokens=kwargs.get("max_tokens", 2048)
+                max_tokens=kwargs.get("max_tokens", 2048),
+                timeout=30
+                # max_retries=3
             )
             return response.choices[0].message.content
         except Exception as e:

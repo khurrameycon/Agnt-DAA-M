@@ -40,7 +40,8 @@ class AgentManager:
         
         # Initialize persistence manager
         self.persistence_manager = AgentPersistenceManager(
-            config_path=os.path.expanduser(config_manager.get("agents.persistence_path", "~/.sagax1"))
+            # config_path=os.path.expanduser(config_manager.get("agents.persistence_path", "~/.sagax1"))
+            config_path=os.path.expanduser(config_manager.get("agents.persistence_path", "~/.my1ai"))
         )
         
         # Initialize available tools

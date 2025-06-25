@@ -139,6 +139,7 @@ class LocalModelAgent(BaseAgent):
 
         # 3. Build the base URL for your model
         base_url = f"https://router.huggingface.co/hf-inference/models/{self.model_id}/v1/chat/completions"
+        # base_url = f"https://api-inference.huggingface.co/models/{self.model_id}"
 
         # 4. The wrapper function
         def generate_text(messages):

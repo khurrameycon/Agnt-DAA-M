@@ -113,7 +113,16 @@ class GroqProvider(BaseAPIProvider):
             return f"Error: {str(e)}"
 
 class AnthropicProvider(BaseAPIProvider):
+    def __init__(self, api_key: str, model: str):
+        print(f"DEBUG AnthropicProvider: Received API key: {'YES (' + api_key[:10] + '...)' if api_key else 'NO - None or empty'}")
+        print(f"DEBUG AnthropicProvider: API key type: {type(api_key)}")
+        print(f"DEBUG AnthropicProvider: API key length: {len(api_key) if api_key else 0}")
+        
+        super().__init__(api_key, model)
+    
     def generate(self, messages: List[Dict], **kwargs) -> str:
+        print(f"DEBUG AnthropicProvider.generate: Using API key: {'YES (' + self.api_key[:10] + '...)' if self.api_key else 'NO - None or empty'}")
+        
         try:
             import anthropic
             client = anthropic.Anthropic(api_key=self.api_key)

@@ -88,6 +88,12 @@ run_dependency_check() {
         "gradio_client:gradio_client"
         "duckduckgo_search:duckduckgo_search"
         "smolagents:smolagents"
+        "sentence_transformers:sentence_transformers"
+        "PyPDF2:pypdf2"
+        "google.genai:google-genai"
+        "langchain:langchain"
+        "chromadb:chromadb"
+        "unidecode:unidecode"
     )
     
     # Define optional dependencies (nice to have)
@@ -98,8 +104,11 @@ run_dependency_check() {
         "torch:torch"
         "selenium:selenium"
         "webdriver_manager:webdriver_manager"
-        "langchain:langchain"
-        "faiss:faiss-cpu"
+        "bitsandbytes:bitsandbytes"
+        "helium:helium"
+        "yaml:pyyaml"
+        "PIL:pillow"
+        "tqdm:tqdm"
     )
     
     missing_critical=()
@@ -148,7 +157,7 @@ run_dependency_check() {
         log_info "Installing critical dependencies..."
         for package in "${missing_critical[@]}"; do
             echo "Installing critical package: $package"
-            pip install --no-cache-dir "$package" || log_error "Failed to install $package"
+            pip install "$package" || log_error "Failed to install $package"
         done
     fi
     
@@ -157,7 +166,7 @@ run_dependency_check() {
         log_info "Installing important dependencies..."
         for package in "${missing_important[@]}"; do
             echo "Installing important package: $package"
-            pip install --no-cache-dir "$package" || log_warning "Failed to install $package"
+            pip install "$package" || log_warning "Failed to install $package"
         done
     fi
     
@@ -169,7 +178,7 @@ run_dependency_check() {
             log_info "Installing optional dependencies..."
             for package in "${missing_optional[@]}"; do
                 echo "Installing optional package: $package"
-                pip install --no-cache-dir "$package" || log_info "Skipped $package (may not be compatible)"
+                pip install "$package" || log_info "Skipped $package (may not be compatible)"
             done
         fi
     fi
@@ -404,11 +413,6 @@ fresh_install() {
     fresh_install_core
     
     log_success "Fresh installation completed!"
-    echo ""
-    echo "IMPORTANT: Don't forget to:"
-    echo "1. Edit the .env file with your API keys"
-    echo "2. Configure your preferences in the app"
-    echo ""
     
     read -p "Do you want to launch $APP_NAME now? (Y/n): " -n 1 -r
     echo
@@ -492,17 +496,61 @@ fresh_install_core() {
     pip install --upgrade pip setuptools wheel
 
     # == Step 4: Install Dependencies ==
+    # == Step 4: Install Dependencies ==
     log_info "Installing dependencies (this may take a few minutes)..."
     
-    # Install in phases for better reliability
-    pip install --no-cache-dir python-dotenv PyQt6 requests markdown certifi || log_error "Failed to install core packages"
-    pip install --no-cache-dir openai groq anthropic httpx || log_warning "Some API packages failed"
-    pip install --no-cache-dir transformers huggingface_hub gradio_client || log_warning "Some ML packages failed"
+    # Phase 1: Core system packages (must succeed)
+    log_info "Phase 1: Installing core system packages..."
+    pip install --no-cache-dir python-dotenv PyQt6 requests markdown certifi || {
+        log_error "Failed to install core packages"
+        exit 1
+    }
+    
+    # Phase 2: API providers (important for functionality)
+    log_info "Phase 2: Installing API providers..."
+    pip install --no-cache-dir openai groq anthropic httpx google-genai || log_warning "Some API packages failed"
+    
+    # Phase 3: Hugging Face ecosystem
+    log_info "Phase 3: Installing Hugging Face packages..."
+    pip install --no-cache-dir huggingface_hub transformers gradio_client || log_warning "Some HF packages failed"
+    
+    # Phase 4: Search and agent tools
+    log_info "Phase 4: Installing agent tools..."
     pip install --no-cache-dir duckduckgo_search smolagents || log_warning "Some tool packages failed"
     
-    # Optional packages
-    pip install --no-cache-dir peft accelerate datasets torch selenium webdriver_manager || log_info "Some optional packages not installed"
-
+    # Phase 5: Document processing
+    log_info "Phase 5: Installing document processing..."
+    pip install --no-cache-dir pypdf2 sentence_transformers || log_warning "Some document packages failed"
+    
+    # Phase 6: LangChain ecosystem  
+    log_info "Phase 6: Installing LangChain packages..."
+    pip install --no-cache-dir langchain langchain-community langchain-huggingface || log_warning "Some LangChain packages failed"
+    
+    # Phase 7: Vector databases and utilities
+    log_info "Phase 7: Installing vector databases..."
+    pip install --no-cache-dir chromadb unidecode || log_warning "Some vector packages failed"
+    
+    # Phase 8: UI enhancements
+    log_info "Phase 8: Installing UI packages..."
+    pip install --no-cache-dir PyQt6-WebEngine || log_warning "WebEngine package failed (some features may be limited)"
+    
+    # Phase 9: Optional ML packages (can fail without breaking app)
+    log_info "Phase 9: Installing optional ML packages..."
+    pip install --no-cache-dir torch accelerate datasets || log_info "Some ML packages not installed (limited ML features)"
+    
+    # Phase 10: Advanced ML tools (very optional)
+    log_info "Phase 10: Installing advanced ML tools..."
+    pip install --no-cache-dir peft bitsandbytes || log_info "Advanced ML packages not installed"
+    
+    # Phase 11: Browser automation (optional)
+    log_info "Phase 11: Installing browser automation..."
+    pip install --no-cache-dir selenium webdriver_manager helium || log_info "Browser automation packages not installed"
+    
+    # Phase 12: Additional utilities
+    log_info "Phase 12: Installing utilities..."
+    pip install --no-cache-dir pyyaml tqdm pillow || log_warning "Some utility packages failed"
+    
+    log_success "Dependency installation completed."
     # == Step 5: Create Configuration ==
     if [[ ! -f ".env" ]]; then
         cat > .env << 'EOF'

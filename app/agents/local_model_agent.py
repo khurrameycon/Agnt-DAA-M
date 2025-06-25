@@ -10,7 +10,21 @@ import json
 from typing import Dict, Any, List, Optional, Callable
 
 from app.agents.base_agent import BaseAgent
-from smolagents import TransformersModel, HfApiModel, OpenAIServerModel, LiteLLMModel
+
+# Updated imports for current smolagents version
+try:
+    from smolagents import TransformersModel, ApiModel, OpenAIServerModel, LiteLLMModel
+except ImportError:
+    # Fallback for older versions
+    try:
+        from smolagents import TransformersModel, HfApiModel as ApiModel, OpenAIServerModel, LiteLLMModel
+    except ImportError:
+        # Minimal fallback
+        from smolagents import TransformersModel
+        ApiModel = None
+        OpenAIServerModel = None
+        LiteLLMModel = None
+
 from huggingface_hub import snapshot_download
 
 class LocalModelAgent(BaseAgent):
@@ -209,35 +223,38 @@ class LocalModelAgent(BaseAgent):
     def _initialize_with_fallbacks(self):
         """Try alternative model implementations if TransformersModel fails"""
         try:
-            # Try HfApiModel
-            try:
-                self.logger.info("Trying HfApiModel...")
-                self.model = HfApiModel(
-                    model_id=self.model_id,
-                    temperature=self.temperature,
-                    max_tokens=self.max_new_tokens
-                )
-            except Exception as e:
-                self.logger.warning(f"Failed to initialize with HfApiModel: {str(e)}")
-                
-                # Try OpenAIServerModel
+            # Try ApiModel (updated from HfApiModel)
+            if ApiModel is not None:
                 try:
-                    self.logger.info("Trying OpenAIServerModel...")
-                    self.model = OpenAIServerModel(
+                    self.logger.info("Trying ApiModel...")
+                    self.model = ApiModel(
                         model_id=self.model_id,
                         temperature=self.temperature,
                         max_tokens=self.max_new_tokens
                     )
                 except Exception as e:
-                    self.logger.warning(f"Failed to initialize with OpenAIServerModel: {str(e)}")
+                    self.logger.warning(f"Failed to initialize with ApiModel: {str(e)}")
                     
-                    # Try LiteLLMModel as last resort
-                    self.logger.info("Trying LiteLLMModel...")
-                    self.model = LiteLLMModel(
-                        model_id=self.model_id,
-                        temperature=self.temperature,
-                        max_tokens=self.max_new_tokens
-                    )
+                    # Try OpenAIServerModel
+                    if OpenAIServerModel is not None:
+                        try:
+                            self.logger.info("Trying OpenAIServerModel...")
+                            self.model = OpenAIServerModel(
+                                model_id=self.model_id,
+                                temperature=self.temperature,
+                                max_tokens=self.max_new_tokens
+                            )
+                        except Exception as e:
+                            self.logger.warning(f"Failed to initialize with OpenAIServerModel: {str(e)}")
+                            
+                            # Try LiteLLMModel as last resort
+                            if LiteLLMModel is not None:
+                                self.logger.info("Trying LiteLLMModel...")
+                                self.model = LiteLLMModel(
+                                    model_id=self.model_id,
+                                    temperature=self.temperature,
+                                    max_tokens=self.max_new_tokens
+                                )
             
             self.is_initialized = True
             self.logger.info(f"Model {self.model_id} initialized successfully with fallback")
